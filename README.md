@@ -1,63 +1,98 @@
-# S3-Bucket-Policies
+# Terraform CI/CD: S3 Bucket with Policies, Cost Estimation & Manual Approval
 
-## Overview
+## What This Project Does
 
-This project demonstrates how to use Terraform to automate the creation and management of an AWS S3 bucket with lifecycle policies and tagging. It also includes a GitHub Actions workflow for CI/CD automation.
-
-## Theory
-
-### What is an S3 Bucket?
-
-Amazon S3 (Simple Storage Service) is an object storage service that allows you to store and retrieve any amount of data at any time. An S3 bucket is a container for storing objects (files, data, etc.).
-
-### S3 Bucket Policies
-
-A bucket policy is a resource-based AWS Identity and Access Management (IAM) policy that you can use to allow or deny actions on your S3 bucket and the objects in it. Policies are written in JSON and can control access at the bucket or object level.
-
-### S3 Lifecycle Rules
-
-Lifecycle rules allow you to automatically manage objects in your bucket. For example, you can transition objects to a cheaper storage class (like STANDARD_IA) after a certain number of days, or delete them after they are no longer needed. This helps optimize storage costs and automate data management.
-
-**Example in this project:**  
-Objects older than 30 days are automatically moved to the STANDARD_IA storage class.
-
-### Tagging
-
-Tags are key-value pairs that help you organize and identify your AWS resources. In this project, the S3 bucket is tagged with `env = "dev"`.
-
-### CI/CD with GitHub Actions
-
-Continuous Integration and Continuous Deployment (CI/CD) automates the process of testing and deploying your infrastructure code.  
-This project uses a GitHub Actions workflow to:
-- Check out the repository
-- Set up Terraform
-- Configure AWS credentials
-- Run `terraform init`, `terraform plan`, and `terraform apply` automatically on every push to the `main` branch
-
-## Usage
-
-1. **Clone the repository:**
-   ```sh
-   git clone https://github.com/Pratyushaa94/S3-Bucket-Policies.git
-   cd S3-Bucket-Policies
-   ```
-
-2. **Set your AWS credentials** as GitHub repository secrets:
-   - `AWS_ACCESS_KEY_ID`
-   - `AWS_SECRET_ACCESS_KEY`
-
-3. **Edit `terraform.tfvars`** to set your desired bucket name and region.
-
-4. **Push changes to the `main` branch** to trigger the workflow and apply your infrastructure changes automatically.
-
-## Files
-
-- `main.tf`: Terraform configuration for the S3 bucket, lifecycle rule, and tags.
-- `variables.tf`: Variable definitions for bucket name, region, etc.
-- `terraform.tfvars`: Actual values for the variables.
-- `outputs.tf`: Outputs for the bucket name and ARN.
-- `.github/workflows/deploy.yml`: GitHub Actions workflow for CI/CD automation.
+This project automates the creation of:
+- An **S3 bucket**
+- **Lifecycle rules** to move objects to `STANDARD_IA` after 30 days
+- **Bucket policies** for access control
+- **Tagging** (e.g., `env = "dev"`)
+- **Remote backend** support for Terraform state
+- CI/CD pipeline using **GitHub Actions**
+- **Cost estimation** using **Infracost**
+- **Manual approval** before applying changes
 
 ---
 
-Feel free to modify the configuration and workflow to suit
+## File Structure
+
+```
+.
+├── main.tf                    # S3 bucket + policies + lifecycle rules
+├── provider.tf                # AWS provider configuration
+├── variables.tf               # Input variable definitions
+├── terraform.tfvars           # Default values (optional)
+├── outputs.tf                 # Outputs like bucket name
+├── environments/
+│   ├── dev.tfvars
+│   ├── uat.tfvars
+│   └── prod.tfvars
+└── .github/workflows/
+    └── deploy.yml             # GitHub Actions CI/CD workflow
+```
+
+---
+
+## Setup Steps
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/<your-username>/<your-repo-name>.git
+cd <your-repo-name>
+```
+
+### 2. Add GitHub Secrets
+
+Go to your repository → **Settings** → **Secrets** → **Actions** and add:
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `INFRACOST_API_KEY`
+
+**To get the Infracost API key:**
+1. Go to https://dashboard.infracost.io
+2. Sign up and copy your API key
+
+### 3. Add a GitHub Environment
+
+1. Go to **Settings** → **Environments**
+2. Create a new environment named `dev-approval`
+3. Add yourself or a teammate as a **Required Reviewer**
+
+### 4. Add Collaborators (Optional)
+
+1. Go to **Settings** → **Collaborators**
+2. Click **Invite a collaborator**
+3. Add your teammate's GitHub username
+
+### 5. Push Your Code
+
+```bash
+git add .
+git commit -m "initial commit"
+git push origin main
+```
+
+This will trigger the GitHub Actions workflow.
+
+---
+
+## How the Workflow Works
+
+1. **Runs** on every push to the `main` branch
+2. **Creates** backend S3 bucket (if not exists)
+3. **Runs** `terraform init` and `terraform plan`
+4. **Infracost** generates a cost estimate
+5. **Waits** for manual approval (via `dev-approval`)
+6. **If approved**, runs `terraform apply`
+
+---
+
+## Cleanup
+
+To destroy the resources:
+
+```bash
+terraform destroy -var-file="environments/dev.tfvars"
+```
