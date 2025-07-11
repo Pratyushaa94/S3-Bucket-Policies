@@ -99,8 +99,8 @@ jobs:
 
       - name: Show Infracost report saved info
         run: |
-          echo "##  Infracost Estimate Summary" >> $GITHUB_STEP_SUMMARY
-          cat infracost-report.txt >> $GITHUB_STEP_SUMMARY
+          echo "INFO: Infracost cost breakdown report:"
+          cat infracost-report.txt
 
   apply:
     name: Terraform Apply (Manual Approval)
